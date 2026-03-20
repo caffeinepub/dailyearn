@@ -47,6 +47,26 @@ actor {
   let taskCompletions = Map.empty<Principal, [TaskCompletion]>();
   let withdrawalRequests = Map.empty<Principal, [WithdrawalRequest]>();
 
+  // Seed predefined tasks
+  do {
+    let seedTasks : [(Nat, Text, Text, Nat)] = [
+      (1, "Watch Ad Video (60s)", "Watch a 60-second advertisement video to earn rewards.", 50),
+      (2, "Complete Survey", "Share your opinion in a quick 5-minute survey.", 200),
+      (3, "Invite a Friend", "Refer a friend and earn when they join and verify.", 300),
+      (4, "Play Mini Game", "Complete a fun mini game challenge to earn rewards.", 150),
+      (5, "Daily Quiz", "Answer 5 trivia questions correctly to earn rewards.", 100),
+      (6, "Read Article", "Read a sponsored article and answer a quick question.", 75),
+      (7, "App Review", "Write a review for a featured app to earn rewards.", 125),
+      (8, "Social Share", "Share a post on social media to earn rewards.", 80),
+      (9, "Profile Complete", "Complete your profile details to unlock bonus earnings.", 250),
+      (10, "Watch Tutorial", "Watch a 3-minute tutorial video to earn rewards.", 60),
+      (11, "Daily Check-in", "Check in daily to maintain your streak and earn rewards.", 40),
+    ];
+    for ((id, name, desc, reward) in seedTasks.vals()) {
+      tasks.add(id, { id; name; description = desc; rewardCents = reward });
+    };
+  };
+
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
@@ -85,6 +105,21 @@ actor {
       case (?t) { t };
     };
 
+    // Check if this specific task was already completed today
+    let existingCompletions = switch (taskCompletions.get(caller)) {
+      case (null) { [] };
+      case (?completions) { completions };
+    };
+
+    let alreadyDoneToday = switch (existingCompletions.find(func(tc : TaskCompletion) : Bool { tc.taskId == taskId and tc.completionDay == todayStart })) {
+      case (null) { false };
+      case (?_) { true };
+    };
+
+    if (alreadyDoneToday) {
+      Runtime.trap("Task already completed today");
+    };
+
     let userProfile = switch (userProfiles.get(caller)) {
       case (null) {
         let newProfile : UserProfile = {
@@ -98,17 +133,13 @@ actor {
         newProfile;
       };
       case (?profile) {
-        if (profile.lastTaskCompletionDay == ?todayStart) {
-          Runtime.trap("Task already completed today");
-        };
-
         let updatedProfile : UserProfile = {
           profile with
           balanceCents = profile.balanceCents + task.rewardCents;
           streakCount = if (profile.lastTaskCompletionDay == ?(todayStart - 24 * 3600 * 1000000000)) {
             profile.streakCount + 1;
           } else {
-            1;
+            profile.streakCount;
           };
           totalEarnings = profile.totalEarnings + task.rewardCents;
           lastTaskCompletionDay = ?todayStart;
@@ -123,10 +154,6 @@ actor {
       completionDay = todayStart;
     };
 
-    let existingCompletions = switch (taskCompletions.get(caller)) {
-      case (null) { [] };
-      case (?completions) { completions };
-    };
     taskCompletions.add(caller, existingCompletions.concat([newCompletion]));
   };
 
@@ -165,7 +192,6 @@ actor {
   };
 
   public query ({ caller }) func getLeaderboard() : async [(Principal, UserProfile)] {
-    // Leaderboard is public - no authorization needed
     let entries = userProfiles.entries().toArray();
     entries.sort(
       func(a, b) {
@@ -178,11 +204,9 @@ actor {
   };
 
   public query ({ caller }) func getUserTaskHistory(user : Principal) : async [TaskCompletion] {
-    // Users can only view their own history, admins can view any
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Can only view your own task history");
     };
-
     switch (taskCompletions.get(user)) {
       case (null) { [] };
       case (?completions) { completions };
@@ -190,7 +214,6 @@ actor {
   };
 
   public query ({ caller }) func getTasksByIds(taskIds : [Nat]) : async [Task] {
-    // Public function - anyone can view tasks
     taskIds.map(
       func(id) {
         switch (tasks.get(id)) {
@@ -201,12 +224,10 @@ actor {
     );
   };
 
-  // Add new pre-defined task (admin only)
   public shared ({ caller }) func addTask(name : Text, description : Text, rewardCents : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can add tasks");
     };
-
     let newId = tasks.size() + 1;
     let newTask : Task = {
       id = newId;
@@ -217,7 +238,6 @@ actor {
     tasks.add(newId, newTask);
   };
 
-  // Complete a predefined task (user only)
   public shared ({ caller }) func completeTaskById(taskId : Nat) : async () {
     await completeTask(taskId);
   };
