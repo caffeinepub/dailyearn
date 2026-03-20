@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    /* Dark green theme - always dark */
+    --background: 0.17 0.06 155;
+    --foreground: 0.97 0.01 155;
+    --card: 0.27 0.08 155;
+    --card-foreground: 0.97 0.01 155;
+    --popover: 0.27 0.08 155;
+    --popover-foreground: 0.97 0.01 155;
+    --primary: 0.76 0.12 78;
+    --primary-foreground: 0.15 0 0;
+    --secondary: 0.33 0.1 155;
+    --secondary-foreground: 0.97 0.01 155;
+    --muted: 0.23 0.08 155;
+    --muted-foreground: 0.75 0.03 155;
+    --accent: 0.33 0.1 155;
+    --accent-foreground: 0.97 0.01 155;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.33 0.1 155;
+    --input: 0.33 0.1 155;
+    --ring: 0.76 0.12 78;
+    --success: 0.75 0.12 148;
+    --gold: 0.76 0.12 78;
+    --chart-1: 0.76 0.12 78;
+    --chart-2: 0.75 0.12 148;
+    --chart-3: 0.6 0.15 230;
+    --chart-4: 0.65 0.18 30;
+    --chart-5: 0.7 0.1 180;
+    --sidebar: 0.23 0.08 155;
+    --sidebar-foreground: 0.97 0.01 155;
+    --sidebar-primary: 0.76 0.12 78;
+    --sidebar-primary-foreground: 0.15 0 0;
+    --sidebar-accent: 0.33 0.1 155;
+    --sidebar-accent-foreground: 0.97 0.01 155;
+    --sidebar-border: 0.33 0.1 155;
+    --sidebar-ring: 0.76 0.12 78;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    background: linear-gradient(
+      135deg,
+      oklch(0.17 0.06 155) 0%,
+      oklch(0.23 0.08 155) 100%
+    );
+    min-height: 100vh;
+    font-family: "Inter", "Plus Jakarta Sans", system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-gold {
+    color: oklch(var(--gold));
+  }
+  .bg-gold {
+    background-color: oklch(var(--gold));
+  }
+  .border-gold {
+    border-color: oklch(var(--gold));
+  }
+  .text-success {
+    color: oklch(var(--success));
+  }
+  .bg-success {
+    background-color: oklch(var(--success));
+  }
+  .card-panel {
+    background-color: oklch(0.27 0.08 155);
+    border: 1px solid oklch(0.33 0.1 155);
+    border-radius: var(--radius);
+  }
+  .gradient-bg {
+    background: linear-gradient(
+      135deg,
+      oklch(0.17 0.06 155) 0%,
+      oklch(0.23 0.08 155) 100%
+    );
+  }
+  .gold-gradient {
+    background: linear-gradient(
+      135deg,
+      oklch(0.76 0.12 78) 0%,
+      oklch(0.68 0.14 65) 100%
+    );
+  }
+  .glow-gold {
+    box-shadow: 0 0 20px oklch(0.76 0.12 78 / 0.3);
+  }
+}
